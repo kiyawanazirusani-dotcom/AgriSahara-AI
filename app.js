@@ -266,7 +266,7 @@ chatForm.addEventListener("submit", async (e)=>{
     typingEl.querySelector("p").textContent = text;
   }catch(err){
     typingEl.classList.remove("msg-typing");
-    typingEl.querySelector("p").textContent = STRINGS[currentLang].errGeneric;
+    typingEl.querySelector("p").textContent = STRINGS[currentLang].errGeneric + " [" + (err.message || err) + "]";
   }
 });
 
