@@ -301,7 +301,7 @@ function speak(text){
   const voices = cachedVoices.length ? cachedVoices : window.speechSynthesis.getVoices();
 
   const utter = new SpeechSynthesisUtterance(text);
-  utter.rate = 0.82;   // slower = clearer for both languages
+  utter.rate = 0.72;   // extra slow for maximum clarity
   utter.pitch = 1;
   utter.volume = 1;
 
