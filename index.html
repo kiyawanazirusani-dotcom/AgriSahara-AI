@@ -40,9 +40,16 @@
     <div class="hero-eyebrow" data-i18n="eyebrow">GEMINI-POWERED FARM DIAGNOSTICS</div>
     <h1 data-i18n="heroTitle">Ka duba ganyen shukarka,<br>mu gaya maka lafiyarta.</h1>
     <p class="hero-sub" data-i18n="heroSub">Ɗauki hoton ganyen amfaninka — masara, gero, wake, dawa — Gemini AI za ta gaya maka cutar, dalilinta, da yadda za ka warware ta, cikin Hausa ko Turanci.</p>
-    <div class="hero-cta">
-      <button class="btn btn-primary" id="jumpScan" data-i18n="ctaScan">Fara Bincike →</button>
-      <button class="btn btn-ghost" id="jumpChat" data-i18n="ctaChat">Yi Tambaya ga AI</button>
+    <div class="quick-actions">
+      <button class="qa-btn qa-primary" id="jumpChat">
+        <span class="qa-icon">🎙️</span><span data-i18n="qaTalkLabel">Yi Magana</span>
+      </button>
+      <button class="qa-btn qa-primary" id="jumpScan">
+        <span class="qa-icon">📷</span><span data-i18n="qaScanLabel">Ɗauki Hoton Ganye</span>
+      </button>
+      <button class="qa-btn qa-toggle" id="autoplayToggle" aria-pressed="true">
+        <span class="qa-icon">🔊</span><span id="autoplayLabel" data-i18n="qaListenOn">Sauraro: A KUNNE</span>
+      </button>
     </div>
   </section>
 
@@ -94,9 +101,13 @@
     </div>
 
     <form class="chat-form" id="chatForm">
+      <button type="button" class="mic-btn" id="micBtn" aria-label="Voice input">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8" stroke-linecap="round"/></svg>
+      </button>
       <input type="text" id="chatInput" data-i18n-placeholder="chatPlaceholder" placeholder="Rubuta tambayarka anan…" autocomplete="off">
       <button type="submit" class="btn btn-primary" data-i18n="sendBtn">Aika</button>
     </form>
+    <p class="mic-status" id="micStatus" hidden></p>
   </section>
 
 </main>

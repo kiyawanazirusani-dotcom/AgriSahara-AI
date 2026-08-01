@@ -17,6 +17,10 @@ const STRINGS = {
     heroSub: "Ɗauki hoton ganyen amfaninka — masara, gero, wake, dawa — Gemini AI za ta gaya maka cutar, dalilinta, da yadda za ka warware ta, cikin Hausa ko Turanci.",
     ctaScan: "Fara Bincike →",
     ctaChat: "Yi Tambaya ga AI",
+    qaTalkLabel: "Yi Magana",
+    qaScanLabel: "Ɗauki Hoton Ganye",
+    qaListenOn: "Sauraro: A KUNNE",
+    qaListenOff: "Sauraro: A KASHE",
     scanTitle: "Binciken Ganye",
     scanSub: "Ɗauki hoto ko zaɓi hoton ganye daga wayarka.",
     uploadHint: "Danna don ɗaukar hoto",
@@ -38,6 +42,9 @@ const STRINGS = {
     statusUnsure: "BA A TABBATA BA",
     errNoKey: "Da fatan za a saka Gemini API key tukuna.",
     errGeneric: "Wani kuskure ya faru. A sake gwadawa.",
+    micRecording: "🔴 Ana rikodi… danna maballin murya sake don tsayarwa",
+    micProcessing: "Ana sarrafa muryarka…",
+    micDenied: "Ba a samu izinin amfani da makirufo ba.",
   },
   en: {
     eyebrow: "GEMINI-POWERED FARM DIAGNOSTICS",
@@ -45,6 +52,10 @@ const STRINGS = {
     heroSub: "Take a photo of any crop leaf — maize, millet, cowpea, sorghum — and Gemini AI will identify disease, explain the cause, and suggest treatment, in Hausa or English.",
     ctaScan: "Start Scan →",
     ctaChat: "Ask the AI",
+    qaTalkLabel: "Talk",
+    qaScanLabel: "Upload Crop Photo",
+    qaListenOn: "Listen: ON",
+    qaListenOff: "Listen: OFF",
     scanTitle: "Leaf Scanner",
     scanSub: "Take a photo or choose one from your phone.",
     uploadHint: "Tap to add a photo",
@@ -66,6 +77,9 @@ const STRINGS = {
     statusUnsure: "NOT CERTAIN",
     errNoKey: "Please add your Gemini API key first.",
     errGeneric: "Something went wrong. Please try again.",
+    micRecording: "🔴 Recording… tap the mic again to stop",
+    micProcessing: "Processing your voice…",
+    micDenied: "Microphone access was not granted.",
   }
 };
 
@@ -91,11 +105,26 @@ document.querySelectorAll(".lang-btn").forEach(btn=>{
   btn.addEventListener("click", ()=> applyLang(btn.dataset.lang));
 });
 
-/* ---------- nav shortcuts ---------- */
-document.getElementById("jumpScan").addEventListener("click", ()=>
-  document.getElementById("scan").scrollIntoView({behavior:"smooth"}));
-document.getElementById("jumpChat").addEventListener("click", ()=>
-  document.getElementById("chat").scrollIntoView({behavior:"smooth"}));
+/* ---------- nav shortcuts (large quick-action buttons) ---------- */
+let autoplayEnabled = true;
+const autoplayToggle = document.getElementById("autoplayToggle");
+const autoplayLabel = document.getElementById("autoplayLabel");
+
+autoplayToggle.addEventListener("click", ()=>{
+  autoplayEnabled = !autoplayEnabled;
+  autoplayToggle.setAttribute("aria-pressed", String(autoplayEnabled));
+  autoplayLabel.textContent = autoplayEnabled ? STRINGS[currentLang].qaListenOn : STRINGS[currentLang].qaListenOff;
+  autoplayLabel.setAttribute("data-i18n", autoplayEnabled ? "qaListenOn" : "qaListenOff");
+});
+
+document.getElementById("jumpScan").addEventListener("click", ()=>{
+  document.getElementById("scan").scrollIntoView({behavior:"smooth"});
+  setTimeout(()=> document.getElementById("fileInput").click(), 450);
+});
+document.getElementById("jumpChat").addEventListener("click", ()=>{
+  document.getElementById("chat").scrollIntoView({behavior:"smooth"});
+  setTimeout(()=> document.getElementById("micBtn").click(), 450);
+});
 
 /* ---------- API key handling ---------- */
 const keyModal = document.getElementById("keyModal");
@@ -214,6 +243,7 @@ ${langInstruction}`;
 
     resultBody.textContent = text.replace(/STATUS:\s*(HEALTHY|DISEASE|UNSURE)\s*/i, "").trim();
     resultCard.hidden = false;
+    if(autoplayEnabled) speak(resultStatus.textContent + ". " + resultBody.textContent);
   }catch(err){
     resultStatus.textContent = "!";
     resultStatus.className = "result-status unsure";
@@ -232,16 +262,124 @@ const chatForm = document.getElementById("chatForm");
 const chatInput = document.getElementById("chatInput");
 let chatHistory = [];
 
+function speak(text){
+  if(!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = currentLang === "ha" ? "ha-NG" : "en-US";
+  utter.rate = 0.95;
+  const voices = window.speechSynthesis.getVoices();
+  const match = voices.find(v => v.lang && v.lang.toLowerCase().startsWith(currentLang === "ha" ? "ha" : "en"));
+  if(match) utter.voice = match;
+  window.speechSynthesis.speak(utter);
+}
+
 function addMsg(text, who){
   const div = document.createElement("div");
   div.className = "msg msg-" + who;
   const p = document.createElement("p");
   p.textContent = text;
   div.appendChild(p);
+  if(who === "bot"){
+    const speakBtn = document.createElement("button");
+    speakBtn.type = "button";
+    speakBtn.className = "speak-btn";
+    speakBtn.setAttribute("aria-label", "Play voice");
+    speakBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3z"/><path d="M16 8a5 5 0 010 8" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
+    speakBtn.addEventListener("click", ()=> speak(p.textContent));
+    div.appendChild(speakBtn);
+    if(autoplayEnabled && text !== "…") speak(text);
+  }
   chatWindow.appendChild(div);
   chatWindow.scrollTop = chatWindow.scrollHeight;
   return div;
 }
+
+/* ---------- Voice input ---------- */
+const micBtn = document.getElementById("micBtn");
+const micStatus = document.getElementById("micStatus");
+let mediaRecorder = null;
+let audioChunks = [];
+let isRecording = false;
+
+function pickAudioMime(){
+  const candidates = ["audio/ogg;codecs=opus", "audio/ogg", "audio/webm;codecs=opus", "audio/webm", "audio/mp4"];
+  for(const c of candidates){
+    if(window.MediaRecorder && MediaRecorder.isTypeSupported(c)) return c;
+  }
+  return "";
+}
+
+micBtn.addEventListener("click", async ()=>{
+  if(!ensureKey()) return;
+
+  if(isRecording){
+    mediaRecorder.stop();
+    return;
+  }
+
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const mimeType = pickAudioMime();
+    mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+    audioChunks = [];
+
+    mediaRecorder.ondataavailable = (e)=> audioChunks.push(e.data);
+
+    mediaRecorder.onstop = async ()=>{
+      isRecording = false;
+      micBtn.classList.remove("recording");
+      stream.getTracks().forEach(t=>t.stop());
+
+      micStatus.hidden = false;
+      micStatus.textContent = STRINGS[currentLang].micProcessing;
+
+      const blob = new Blob(audioChunks, { type: mediaRecorder.mimeType || "audio/ogg" });
+      const reader = new FileReader();
+      reader.onload = async ()=>{
+        const base64Audio = reader.result.split(",")[1];
+        const audioMime = (mediaRecorder.mimeType || "audio/ogg").split(";")[0];
+
+        const langInstruction = currentLang === "ha"
+          ? "Amsa gaba ɗaya cikin Hausa mai sauƙi, don manomi a Jigawa, Najeriya."
+          : "Answer entirely in plain English for a farmer in Jigawa, Nigeria.";
+
+        const prompt = `This is a spoken farming question from a farmer. First transcribe exactly what they said, then answer their question as the AgriSahara AI farm assistant. ${langInstruction}
+
+Respond in exactly this format:
+TRANSCRIPT: <what the farmer said>
+ANSWER: <your answer, 2-4 sentences>`;
+
+        try{
+          const text = await callGemini([
+            { text: prompt },
+            { inline_data: { mime_type: audioMime, data: base64Audio } }
+          ]);
+          const transcriptMatch = text.match(/TRANSCRIPT:\s*([\s\S]*?)\s*ANSWER:/i);
+          const answerMatch = text.match(/ANSWER:\s*([\s\S]*)/i);
+          const transcript = transcriptMatch ? transcriptMatch[1].trim() : "🎤";
+          const answer = answerMatch ? answerMatch[1].trim() : text;
+
+          addMsg(transcript, "user");
+          addMsg(answer, "bot");
+        }catch(err){
+          addMsg(STRINGS[currentLang].errGeneric + " [" + (err.message || err) + "]", "bot");
+        }finally{
+          micStatus.hidden = true;
+        }
+      };
+      reader.readAsDataURL(blob);
+    };
+
+    mediaRecorder.start();
+    isRecording = true;
+    micBtn.classList.add("recording");
+    micStatus.hidden = false;
+    micStatus.textContent = STRINGS[currentLang].micRecording;
+  }catch(err){
+    addMsg(STRINGS[currentLang].micDenied, "bot");
+  }
+});
 
 chatForm.addEventListener("submit", async (e)=>{
   e.preventDefault();
@@ -264,6 +402,7 @@ chatForm.addEventListener("submit", async (e)=>{
     ]);
     typingEl.classList.remove("msg-typing");
     typingEl.querySelector("p").textContent = text;
+    if(autoplayEnabled) speak(text);
   }catch(err){
     typingEl.classList.remove("msg-typing");
     typingEl.querySelector("p").textContent = STRINGS[currentLang].errGeneric + " [" + (err.message || err) + "]";
