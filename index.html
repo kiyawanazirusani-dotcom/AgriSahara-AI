@@ -15,6 +15,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="AgriSahara">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 
@@ -50,6 +51,17 @@
       <button class="qa-btn qa-toggle" id="autoplayToggle" aria-pressed="true">
         <span class="qa-icon">🔊</span><span id="autoplayLabel" data-i18n="qaListenOn">Sauraro: A KUNNE</span>
       </button>
+    </div>
+  </section>
+
+  <!-- SHARE / QR -->
+  <section class="share-panel wrap" id="share">
+    <div class="share-box">
+      <div class="share-text">
+        <p class="share-label" data-i18n="shareLabel">Raba wannan app da wani manomi:</p>
+        <button class="btn btn-ghost share-copy" id="copyLinkBtn" data-i18n="copyLinkBtn">🔗 Kwafi Link</button>
+      </div>
+      <div id="qrcodeBox" class="qr-box" aria-label="QR code to open AgriSahara AI"></div>
     </div>
   </section>
 

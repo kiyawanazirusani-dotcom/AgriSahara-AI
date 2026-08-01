@@ -33,6 +33,8 @@ const STRINGS = {
     chatPlaceholder: "Rubuta tambayarka anan…",
     sendBtn: "Aika",
     clearChatBtn: "🗑 Sabon Tattaunawa",
+    shareLabel: "Raba wannan app da wani manomi:",
+    copyLinkBtn: "🔗 Kwafi Link",
     footerNote: "AgriSahara AI · Gina don Build with Gemini XPRIZE · Ana amfani da Google Gemini API kai tsaye a wannan na'urar.",
     keyTitle: "Saka Gemini API Key",
     keyBody: "AgriSahara AI tana amfani da Google Gemini kai tsaye daga wayarka — babu server. Saka API key ɗinka (kyauta ne daga aistudio.google.com/apikey). Za a adana shi a wayarka kaɗai.",
@@ -69,6 +71,8 @@ const STRINGS = {
     chatPlaceholder: "Type your question…",
     sendBtn: "Send",
     clearChatBtn: "🗑 New Conversation",
+    shareLabel: "Share this app with a farmer:",
+    copyLinkBtn: "🔗 Copy Link",
     footerNote: "AgriSahara AI · Built for the Build with Gemini XPRIZE · Calls the Google Gemini API live from this device.",
     keyTitle: "Add your Gemini API key",
     keyBody: "AgriSahara AI talks to Google Gemini directly from your phone — no server involved. Add your API key (free at aistudio.google.com/apikey). It's stored only on this device.",
@@ -479,6 +483,32 @@ if(clearChatBtn){
     // remove all messages except the first static greeting bubble
     const bubbles = chatWindow.querySelectorAll(".msg");
     bubbles.forEach((b, i)=>{ if(i > 0) b.remove(); });
+  });
+}
+
+/* ---------- Share panel: QR code + copy link ---------- */
+if(typeof QRCode !== "undefined"){
+  new QRCode(document.getElementById("qrcodeBox"), {
+    text: window.location.href,
+    width: 84,
+    height: 84,
+    colorDark: "#1F6D45",
+    colorLight: "#ffffff"
+  });
+}
+
+const copyLinkBtn = document.getElementById("copyLinkBtn");
+if(copyLinkBtn){
+  copyLinkBtn.addEventListener("click", async ()=>{
+    try{
+      await navigator.clipboard.writeText(window.location.href);
+      const original = copyLinkBtn.textContent;
+      copyLinkBtn.textContent = currentLang === "ha" ? "✅ An kwafi!" : "✅ Copied!";
+      setTimeout(()=>{ copyLinkBtn.textContent = original; }, 1800);
+    }catch(e){
+      // clipboard API unavailable — fall back to showing the link so it can be selected manually
+      alert(window.location.href);
+    }
   });
 }
 
