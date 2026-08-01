@@ -32,6 +32,7 @@ const STRINGS = {
     chatGreeting: "Sannu! Ni mataimakin AgriSahara ne. Ka tambaye ni kome game da gonarka — misali: \"Yaushe ne lokacin shuka gero a Jigawa?\"",
     chatPlaceholder: "Rubuta tambayarka anan…",
     sendBtn: "Aika",
+    clearChatBtn: "🗑 Sabon Tattaunawa",
     footerNote: "AgriSahara AI · Gina don Build with Gemini XPRIZE · Ana amfani da Google Gemini API kai tsaye a wannan na'urar.",
     keyTitle: "Saka Gemini API Key",
     keyBody: "AgriSahara AI tana amfani da Google Gemini kai tsaye daga wayarka — babu server. Saka API key ɗinka (kyauta ne daga aistudio.google.com/apikey). Za a adana shi a wayarka kaɗai.",
@@ -67,6 +68,7 @@ const STRINGS = {
     chatGreeting: "Hi! I'm the AgriSahara assistant. Ask me anything about your farm — for example: \"When should I plant millet in Jigawa?\"",
     chatPlaceholder: "Type your question…",
     sendBtn: "Send",
+    clearChatBtn: "🗑 New Conversation",
     footerNote: "AgriSahara AI · Built for the Build with Gemini XPRIZE · Calls the Google Gemini API live from this device.",
     keyTitle: "Add your Gemini API key",
     keyBody: "AgriSahara AI talks to Google Gemini directly from your phone — no server involved. Add your API key (free at aistudio.google.com/apikey). It's stored only on this device.",
@@ -260,21 +262,65 @@ ${langInstruction}`;
 const chatWindow = document.getElementById("chatWindow");
 const chatForm = document.getElementById("chatForm");
 const chatInput = document.getElementById("chatInput");
-let chatHistory = [];
+
+const CHAT_HISTORY_KEY = "agrisahara_chat_history";
+const MAX_SAVED_MESSAGES = 60;
+
+function loadChatHistory(){
+  try{
+    const raw = localStorage.getItem(CHAT_HISTORY_KEY);
+    return raw ? JSON.parse(raw) : [];
+  }catch(e){
+    return [];
+  }
+}
+
+function saveChatHistory(history){
+  try{
+    const trimmed = history.slice(-MAX_SAVED_MESSAGES);
+    localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(trimmed));
+  }catch(e){ /* storage full or unavailable — fail silently, chat still works this session */ }
+}
+
+let chatHistory = loadChatHistory();
+
+let cachedVoices = [];
+if('speechSynthesis' in window){
+  cachedVoices = window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged = ()=>{ cachedVoices = window.speechSynthesis.getVoices(); };
+}
 
 function speak(text){
   if(!('speechSynthesis' in window)) return;
   window.speechSynthesis.cancel();
+
+  const voices = cachedVoices.length ? cachedVoices : window.speechSynthesis.getVoices();
+
   const utter = new SpeechSynthesisUtterance(text);
-  utter.lang = currentLang === "ha" ? "ha-NG" : "en-US";
-  utter.rate = 0.95;
-  const voices = window.speechSynthesis.getVoices();
-  const match = voices.find(v => v.lang && v.lang.toLowerCase().startsWith(currentLang === "ha" ? "ha" : "en"));
-  if(match) utter.voice = match;
+  utter.rate = 0.82;   // slower = clearer for both languages
+  utter.pitch = 1;
+  utter.volume = 1;
+
+  if(currentLang === "ha"){
+    // Most Android/Chrome TTS engines have no native Hausa voice.
+    // Try common Hausa/Nigerian locale codes first; if none exist,
+    // fall back to Nigerian or generic English rather than a random voice —
+    // content will still be spoken, pronunciation just won't be native Hausa.
+    const haVoice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith("ha"));
+    const ngVoice = voices.find(v => v.lang && v.lang.toLowerCase() === "en-ng");
+    utter.voice = haVoice || ngVoice || null;
+    utter.lang = haVoice ? haVoice.lang : (ngVoice ? "en-NG" : "en-US");
+  } else {
+    const enVoice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith("en"));
+    utter.voice = enVoice || null;
+    utter.lang = "en-US";
+  }
+
   window.speechSynthesis.speak(utter);
 }
 
-function addMsg(text, who){
+function addMsg(text, who, opts){
+  opts = opts || {};
   const div = document.createElement("div");
   div.className = "msg msg-" + who;
   const p = document.createElement("p");
@@ -288,10 +334,16 @@ function addMsg(text, who){
     speakBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3z"/><path d="M16 8a5 5 0 010 8" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
     speakBtn.addEventListener("click", ()=> speak(p.textContent));
     div.appendChild(speakBtn);
-    if(autoplayEnabled && text !== "…") speak(text);
+    if(autoplayEnabled && text !== "…" && !opts.skipAutoplay) speak(text);
   }
   chatWindow.appendChild(div);
   chatWindow.scrollTop = chatWindow.scrollHeight;
+
+  if(!opts.skipSave && text !== "…"){
+    chatHistory.push({ who, text, t: Date.now() });
+    saveChatHistory(chatHistory);
+  }
+
   return div;
 }
 
@@ -402,12 +454,33 @@ chatForm.addEventListener("submit", async (e)=>{
     ]);
     typingEl.classList.remove("msg-typing");
     typingEl.querySelector("p").textContent = text;
+    chatHistory.push({ who: "bot", text, t: Date.now() });
+    saveChatHistory(chatHistory);
     if(autoplayEnabled) speak(text);
   }catch(err){
     typingEl.classList.remove("msg-typing");
     typingEl.querySelector("p").textContent = STRINGS[currentLang].errGeneric + " [" + (err.message || err) + "]";
   }
 });
+
+/* Restore any previously saved chat messages (skip the static greeting already in HTML) */
+function restoreChatHistory(){
+  chatHistory.forEach(m=>{
+    addMsg(m.text, m.who, { skipAutoplay:true, skipSave:true });
+  });
+}
+restoreChatHistory();
+
+const clearChatBtn = document.getElementById("clearChatBtn");
+if(clearChatBtn){
+  clearChatBtn.addEventListener("click", ()=>{
+    chatHistory = [];
+    saveChatHistory(chatHistory);
+    // remove all messages except the first static greeting bubble
+    const bubbles = chatWindow.querySelectorAll(".msg");
+    bubbles.forEach((b, i)=>{ if(i > 0) b.remove(); });
+  });
+}
 
 /* init */
 applyLang("ha");

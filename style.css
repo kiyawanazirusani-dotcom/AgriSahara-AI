@@ -139,6 +139,13 @@ body{
   font-family:var(--font-display); font-weight:600; font-size:1.55rem;
   margin:0 0 6px; color:var(--indigo-ink);
 }
+.panel-head-row{display:flex; align-items:center; justify-content:space-between; gap:10px;}
+.panel-head-row h2{margin:0;}
+.clear-chat-btn{
+  font-family:var(--font-mono); font-size:0.68rem; letter-spacing:.02em;
+  background:none; border:1px solid var(--line); border-radius:100px;
+  padding:6px 12px; color:rgba(28,35,30,0.6); cursor:pointer; flex-shrink:0;
+}
 .panel-head p{margin:0; color:rgba(28,35,30,0.7); font-size:0.95rem;}
 
 /* ===== Scanner ===== */
