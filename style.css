@@ -64,9 +64,8 @@ body{
 }
 .brand{display:flex; align-items:center; gap:9px;}
 .brand-mark{
-  width:20px; height:20px; border-radius:5px;
-  background:conic-gradient(from 220deg, var(--indigo-deep), var(--millet), var(--clay), var(--indigo-deep));
-  flex-shrink:0;
+  width:28px; height:28px; border-radius:7px;
+  flex-shrink:0; display:block; object-fit:cover;
 }
 .brand-name{
   font-family:var(--font-display); font-weight:600; font-size:1.15rem;
