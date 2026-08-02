@@ -3,149 +3,224 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AgriSahara AI — Mataimakin Manoma na AI</title>
-<meta name="description" content="AgriSahara AI helps African farmers detect crop disease from photos and get farming advice in Hausa and English, powered by Google Gemini.">
+<title>AgriSahara AI — Jagoran Manomi na AI</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
-<link rel="manifest" href="manifest.json">
-<link rel="icon" href="icon-192.png">
-<link rel="apple-touch-icon" href="icon-192.png">
-<meta name="theme-color" content="#1B2A4A">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="AgriSahara">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --soil-dark:#2B2118;
+    --millet-green:#3D5C3A;
+    --millet-green-deep:#25391F;
+    --ochre:#C48A2B;
+    --sand:#F6F3E9;
+    --sand-warm:#EDE7D6;
+    --line:#D8CFB8;
+    --white:#FFFDF8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:'Work Sans', sans-serif;
+    background:var(--sand);
+    color:var(--soil-dark);
+    line-height:1.55;
+  }
+  h1,h2,h3{font-family:'Fraunces', serif; font-weight:700;}
+  .wrap{max-width:520px; margin:0 auto; padding:0 20px;}
+
+  header{padding:18px 0; border-bottom:1px solid var(--line); background:var(--white); position:sticky; top:0; z-index:10;}
+  header .wrap{display:flex; align-items:center; justify-content:space-between;}
+  .logo{font-family:'Fraunces',serif; font-weight:700; font-size:19px; color:var(--millet-green-deep); display:flex; align-items:center; gap:8px;}
+  .logo .dot{width:9px;height:9px;border-radius:50%;background:var(--ochre); display:inline-block;}
+
+  .hero{padding:44px 0 36px;}
+  .eyebrow{font-size:13px; letter-spacing:.06em; text-transform:uppercase; color:var(--ochre); font-weight:600; margin-bottom:10px;}
+  .hero h1{font-size:34px; line-height:1.15; color:var(--millet-green-deep); margin-bottom:14px;}
+  .hero p{font-size:16px; color:#4A4033; max-width:44ch;}
+  .cta-row{display:flex; gap:10px; margin-top:22px; flex-wrap:wrap;}
+  .btn{
+    display:inline-block; padding:13px 20px; border-radius:8px; font-weight:600;
+    text-decoration:none; font-size:15px; border:none; cursor:pointer; font-family:inherit;
+  }
+  .btn-primary{background:var(--millet-green); color:var(--white);}
+  .btn-primary:active{background:var(--millet-green-deep);}
+  .btn-outline{background:transparent; color:var(--millet-green-deep); border:1.5px solid var(--millet-green);}
+
+  .journey{padding:36px 0; border-top:1px solid var(--line);}
+  .journey h2{font-size:23px; color:var(--millet-green-deep); margin-bottom:22px;}
+  .stage{display:flex; gap:14px; padding:16px 0; border-bottom:1px dashed var(--line);}
+  .stage:last-child{border-bottom:none;}
+  .stage .num{font-family:'Fraunces',serif; font-size:22px; color:var(--ochre); font-weight:700; min-width:34px;}
+  .stage h3{font-size:16px; margin-bottom:4px; color:var(--soil-dark);}
+  .stage p{font-size:14px; color:#5B5142;}
+
+  section.tool{padding:32px 0; border-top:1px solid var(--line);}
+  section.tool h2{font-size:21px; color:var(--millet-green-deep); margin-bottom:8px;}
+  section.tool .sub{font-size:14px; color:#5B5142; margin-bottom:18px;}
+
+  textarea, input[type=text]{
+    width:100%; padding:13px 14px; border-radius:8px; border:1.5px solid var(--line);
+    background:var(--white); font-family:inherit; font-size:15px; color:var(--soil-dark);
+    resize:vertical;
+  }
+  textarea:focus, input:focus{outline:2px solid var(--millet-green); outline-offset:1px;}
+
+  .file-btn{
+    display:block; width:100%; padding:16px; border-radius:8px; border:1.5px dashed var(--millet-green);
+    background:var(--sand-warm); text-align:center; font-size:14px; color:var(--millet-green-deep); font-weight:600; cursor:pointer;
+  }
+  #petPreview{max-width:100%; border-radius:8px; margin-top:12px; display:none;}
+
+  .result{
+    margin-top:16px; padding:16px; border-radius:8px; background:var(--sand-warm);
+    border-left:4px solid var(--ochre); font-size:14.5px; white-space:pre-wrap; display:none;
+  }
+  .loading{font-size:14px; color:var(--ochre); margin-top:10px; display:none;}
+
+  .premium{
+    padding:22px; border-radius:12px; background:var(--millet-green-deep); color:var(--sand); margin:32px 0;
+  }
+  .premium h3{color:var(--white); font-size:19px; margin-bottom:8px;}
+  .premium p{font-size:14px; color:#D9E3D3; margin-bottom:14px;}
+  .premium .btn-primary{background:var(--ochre);}
+
+  footer{padding:30px 0 50px; border-top:1px solid var(--line); font-size:13px; color:#7A705E;}
+  .config-note{background:#FFF4E0; border:1px solid var(--ochre); padding:12px; border-radius:8px; font-size:12.5px; margin:18px 0; color:#5B4319;}
+</style>
 </head>
 <body>
 
-<div class="dye-texture" aria-hidden="true"></div>
-
-<header class="site-header">
-  <div class="wrap header-inner">
-    <div class="brand">
-      <img src="icon-192.png" alt="" class="brand-mark" width="28" height="28">
-      <span class="brand-name">AgriSahara <em>AI</em></span>
-    </div>
-    <nav class="lang-toggle" role="group" aria-label="Language">
-      <button class="lang-btn active" data-lang="ha">Hausa</button>
-      <button class="lang-btn" data-lang="en">English</button>
-    </nav>
+<header>
+  <div class="wrap">
+    <div class="logo"><span class="dot"></span> AgriSahara AI</div>
   </div>
 </header>
 
-<main>
+<div class="wrap">
 
-  <!-- HERO -->
-  <section class="hero wrap">
-    <div class="hero-eyebrow" data-i18n="eyebrow">GEMINI-POWERED FARM DIAGNOSTICS</div>
-    <h1 data-i18n="heroTitle">Ka duba ganyen shukarka,<br>mu gaya maka lafiyarta.</h1>
-    <p class="hero-sub" data-i18n="heroSub">Ɗauki hoton ganyen amfaninka — masara, gero, wake, dawa — Gemini AI za ta gaya maka cutar, dalilinta, da yadda za ka warware ta, cikin Hausa ko Turanci.</p>
-    <div class="quick-actions">
-      <button class="qa-btn qa-primary" id="jumpChat">
-        <span class="qa-icon">🎙️</span><span data-i18n="qaTalkLabel">Yi Magana</span>
-      </button>
-      <button class="qa-btn qa-primary" id="jumpScan">
-        <span class="qa-icon">📷</span><span data-i18n="qaScanLabel">Ɗauki Hoton Ganye</span>
-      </button>
-      <button class="qa-btn qa-toggle" id="autoplayToggle" aria-pressed="true">
-        <span class="qa-icon">🔊</span><span id="autoplayLabel" data-i18n="qaListenOn">Sauraro: A KUNNE</span>
-      </button>
+  <section class="hero">
+    <div class="eyebrow">Daga Shuka Zuwa Girbi</div>
+    <h1>Jagoran AI na Manomi, a Hannunka</h1>
+    <p>AgriSahara AI yana ba manoma shawarwarin AI na gaske — a Hausa — kan shuka, kariya daga cuta, da lokacin girbi, domin karin amfani da riba.</p>
+    <div class="cta-row">
+      <a href="#advisor" class="btn btn-primary">Tambayi AI Yanzu</a>
+      <a href="#pest" class="btn btn-outline">Gwada Ganyen Shuka</a>
     </div>
   </section>
 
-  <!-- SHARE / QR -->
-  <section class="share-panel wrap" id="share">
-    <div class="share-box">
-      <div class="share-text">
-        <p class="share-label" data-i18n="shareLabel">Raba wannan app da wani manomi:</p>
-        <button class="btn btn-ghost share-copy" id="copyLinkBtn" data-i18n="copyLinkBtn">🔗 Kwafi Link</button>
-      </div>
-      <div id="qrcodeBox" class="qr-box" aria-label="QR code to open AgriSahara AI"></div>
-    </div>
+  <section class="journey">
+    <h2>Tafiyar Manomi Tare da Mu</h2>
+    <div class="stage"><div class="num">01</div><div><h3>Shuka</h3><p>Shawarar irin da ya dace da ƙasarka da lokacin damina.</p></div></div>
+    <div class="stage"><div class="num">02</div><div><h3>Kulawa</h3><p>Jadawalin ban ruwa da taki bisa yanayin shukarka.</p></div></div>
+    <div class="stage"><div class="num">03</div><div><h3>Kariya</h3><p>Gano cuta ko kwaro ta hoto, tare da maganin gaggawa.</p></div></div>
+    <div class="stage"><div class="num">04</div><div><h3>Girbi</h3><p>Sanin lokacin girbi da farashin kasuwa mafi kyau.</p></div></div>
   </section>
 
-  <!-- SCANNER -->
-  <section class="panel scan-panel wrap" id="scan">
-    <div class="panel-head">
-      <span class="panel-index">01</span>
-      <h2 data-i18n="scanTitle">Binciken Ganye</h2>
-      <p data-i18n="scanSub">Ɗauki hoto ko zaɓi hoton ganye daga wayarka.</p>
-    </div>
-
-    <div class="scan-stage">
-      <div class="upload-frame" id="uploadFrame">
-        <img id="previewImg" alt="" hidden>
-        <div class="upload-empty" id="uploadEmpty">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 16l4.5-6 3 4 3-2.5L20 16" stroke-linecap="round" stroke-linejoin="round"/><rect x="3" y="4" width="18" height="16" rx="2"/></svg>
-          <span data-i18n="uploadHint">Danna don ɗaukar hoto</span>
-        </div>
-        <div class="scan-line" id="scanLine" hidden></div>
-      </div>
-
-      <div class="scan-controls">
-        <label class="file-btn btn btn-primary">
-          <input type="file" id="fileInput" accept="image/*" capture="environment" hidden>
-          <span data-i18n="chooseBtn">Zaɓi Hoto</span>
-        </label>
-        <button class="btn btn-secondary" id="analyzeBtn" disabled data-i18n="analyzeBtn">Nazarta Ganye</button>
-      </div>
-
-      <div class="result-card" id="resultCard" hidden>
-        <div class="result-status" id="resultStatus"></div>
-        <div class="result-body" id="resultBody"></div>
-      </div>
-    </div>
+  <section class="tool" id="advisor">
+    <h2>Tambayi Mai Ba da Shawara na AI</h2>
+    <div class="sub">Rubuta tambayarka game da shuka, kasa, ko yanayi — Gemini AI za ta amsa maka a Hausa.</div>
+    <textarea id="advisorInput" rows="4" placeholder="Misali: Ina son shuka gyada a Kiyawa, wane lokaci ya fi dacewa?"></textarea>
+    <div class="cta-row"><button class="btn btn-primary" onclick="askAdvisor()">Aika Tambaya</button></div>
+    <div class="loading" id="advisorLoading">AI tana tunani...</div>
+    <div class="result" id="advisorResult"></div>
   </section>
 
-  <!-- CHAT / ADVICE -->
-  <section class="panel chat-panel wrap" id="chat">
-    <div class="panel-head">
-      <span class="panel-index">02</span>
-      <div class="panel-head-row">
-        <h2 data-i18n="chatTitle">Tambayi Mataimaki</h2>
-        <button class="clear-chat-btn" id="clearChatBtn" data-i18n="clearChatBtn">🗑 Sabon Tattaunawa</button>
-      </div>
-      <p data-i18n="chatSub">Yi tambaya kai tsaye game da shuka, ƙasa, ruwan sama, ko kula da gona.</p>
-    </div>
-
-    <div class="chat-window" id="chatWindow">
-      <div class="msg msg-bot">
-        <p data-i18n="chatGreeting">Sannu! Ni mataimakin AgriSahara ne. Ka tambaye ni kome game da gonarka — misali: "Yaushe ne lokacin shuka gero a Jigawa?"</p>
-      </div>
-    </div>
-
-    <form class="chat-form" id="chatForm">
-      <button type="button" class="mic-btn" id="micBtn" aria-label="Voice input">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8" stroke-linecap="round"/></svg>
-      </button>
-      <input type="text" id="chatInput" data-i18n-placeholder="chatPlaceholder" placeholder="Rubuta tambayarka anan…" autocomplete="off">
-      <button type="submit" class="btn btn-primary" data-i18n="sendBtn">Aika</button>
-    </form>
-    <p class="mic-status" id="micStatus" hidden></p>
+  <section class="tool" id="pest">
+    <h2>Gwada Ganyen Shuka</h2>
+    <div class="sub">Dauki hoton ganyen shukarka mai matsala — AI za ta gano cutar ko kwaron da ke damunta.</div>
+    <label class="file-btn">
+      📷 Zaɓi ko Ɗauki Hoto
+      <input type="file" id="petInput" accept="image/*" capture="environment" style="display:none" onchange="handleImage(event)">
+    </label>
+    <img id="petPreview">
+    <div class="cta-row"><button class="btn btn-primary" onclick="askPestDoctor()">Bincika Hoton</button></div>
+    <div class="loading" id="pestLoading">AI tana duba hoton...</div>
+    <div class="result" id="pestResult"></div>
   </section>
 
-</main>
+  <div class="config-note">
+    ⚙️ <strong>Ga mai haɓaka app ɗin:</strong> Sanya GEMINI_API_KEY ɗinka a ƙasan wannan fayil (layin da ke ɗauke da "REPLACE_WITH_YOUR_API_KEY") kafin turawa (deploy) zuwa Firebase Hosting.
+  </div>
 
-<footer class="site-footer">
-  <div class="wrap footer-inner">
-    <p data-i18n="footerNote">AgriSahara AI · Gina don Build with Gemini XPRIZE · Ana amfani da Google Gemini API kai tsaye a wannan na'urar.</p>
+  <div class="premium">
+    <h3>Fasali na Musamman</h3>
+    <p>Samu faɗakarwa ta yau da kullum kan yanayi da farashin kasuwa ta WhatsApp — ₦300 kacal a wata.</p>
+    <button class="btn btn-primary" onclick="alert('Aika ₦300 zuwa lambar da aka bayar, sannan aika screenshot don tabbatarwa.')">Biya Yanzu</button>
+  </div>
+
+</div>
+
+<footer>
+  <div class="wrap">
+    AgriSahara AI — An gina don Build with Gemini XPRIZE Hackathon, 2026. Kiyawa, Jigawa State, Najeriya.
   </div>
 </footer>
 
-<!-- API KEY MODAL -->
-<div class="modal-backdrop" id="keyModal">
-  <div class="modal-box">
-    <h3 data-i18n="keyTitle">Saka Gemini API Key</h3>
-    <p data-i18n="keyBody">AgriSahara AI tana amfani da Google Gemini kai tsaye daga wayarka — babu server. Saka API key ɗinka (kyauta ne daga aistudio.google.com/apikey). Za a adana shi a wayarka kaɗai.</p>
-    <input type="password" id="apiKeyInput" placeholder="AIza...">
-    <div class="modal-actions">
-      <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" class="btn btn-ghost" data-i18n="keyGet">Sami Key</a>
-      <button class="btn btn-primary" id="saveKeyBtn" data-i18n="keySave">Ajiye</button>
-    </div>
-  </div>
-</div>
+<script>
+  const GEMINI_API_KEY = "REPLACE_WITH_YOUR_API_KEY";
+  const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
 
-<script src="app.js"></script>
+  async function askAdvisor(){
+    const q = document.getElementById('advisorInput').value.trim();
+    if(!q){ alert('Da fatan za a rubuta tambaya tukuna.'); return; }
+    const loading = document.getElementById('advisorLoading');
+    const result = document.getElementById('advisorResult');
+    loading.style.display='block'; result.style.display='none';
+    try{
+      const prompt = `Kai kwararre ne kan noma a Arewacin Najeriya. Amsa da Hausa mai sauki, gajarta kuma amfani, ga wannan tambayar manomi: ${q}`;
+      const res = await fetch(GEMINI_URL, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ contents:[{ parts:[{ text: prompt }] }] })
+      });
+      const data = await res.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'An samu matsala wajen samun amsa. Sake gwadawa.';
+      result.textContent = text;
+    }catch(e){
+      result.textContent = 'An kasa haɗawa da AI. Duba internet ɗinka sannan sake gwadawa.';
+    }
+    loading.style.display='none'; result.style.display='block';
+  }
+
+  let imageBase64 = null;
+  function handleImage(event){
+    const file = event.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e){
+      imageBase64 = e.target.result.split(',')[1];
+      const preview = document.getElementById('petPreview');
+      preview.src = e.target.result;
+      preview.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function askPestDoctor(){
+    if(!imageBase64){ alert('Da fatan za a zaɓi hoto tukuna.'); return; }
+    const loading = document.getElementById('pestLoading');
+    const result = document.getElementById('pestResult');
+    loading.style.display='block'; result.style.display='none';
+    try{
+      const prompt = "Kai likitan tsire-tsire ne. Duba wannan hoton ganye/shuka, gano ko akwai cuta ko kwaro, sannan bada shawarar magani cikin Hausa mai sauki, a takaice.";
+      const res = await fetch(GEMINI_URL, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          contents:[{ parts:[
+            { text: prompt },
+            { inline_data: { mime_type:'image/jpeg', data: imageBase64 } }
+          ]}]
+        })
+      });
+      const data = await res.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'An samu matsala wajen bincike. Sake gwadawa.';
+      result.textContent = text;
+    }catch(e){
+      result.textContent = 'An kasa haɗawa da AI. Duba internet ɗinka sannan sake gwadawa.';
+    }
+    loading.style.display='none'; result.style.display='block';
+  }
+</script>
+
 </body>
 </html>
