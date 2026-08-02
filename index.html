@@ -3,92 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AgriSahara AI - Taimakon Manoma</title>
+    <title>AgriSahara AI - Plant Health Assistant</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: #f0f7f4; color: #1c3b2b; padding: 15px; }
-        .card { max-width: 450px; margin: 20px auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-        .header { text-align: center; border-bottom: 2px solid #e2ece9; padding-bottom: 15px; margin-bottom: 15px; }
-        .header h1 { color: #2e7d32; font-size: 24px; }
-        .header p { color: #666; font-size: 13px; margin-top: 4px; }
-        label { font-weight: bold; font-size: 14px; display: block; margin-bottom: 6px; }
-        textarea { width: 100%; height: 110px; padding: 10px; border: 1px solid #99c2a2; border-radius: 8px; font-size: 14px; outline: none; margin-bottom: 12px; resize: none; }
-        textarea:focus { border-color: #2e7d32; }
-        button { width: 100%; background-color: #2e7d32; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+        body { background-color: #f2f7f4; color: #1c3b2b; padding: 15px; }
+        .card { max-width: 450px; margin: 20px auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .header { text-align: center; border-bottom: 2px solid #e2ece9; padding-bottom: 12px; margin-bottom: 15px; }
+        .header h2 { color: #2e7d32; }
+        label { font-weight: bold; font-size: 14px; display: block; margin-top: 10px; margin-bottom: 5px; }
+        input[type="password"], input[type="file"] { width: 100%; padding: 10px; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 6px; }
+        button { width: 100%; padding: 12px; background-color: #2e7d32; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 15px; margin-top: 5px; }
         button:disabled { background-color: #a5d6a7; }
-        #outputBox { margin-top: 18px; padding: 12px; background: #e8f5e9; border-left: 4px solid #2e7d32; border-radius: 6px; display: none; }
-        #outputBox h3 { font-size: 15px; color: #1b5e20; margin-bottom: 6px; }
-        #outputContent { font-size: 13.5px; line-height: 1.5; white-space: pre-wrap; }
+        #result { margin-top: 18px; padding: 12px; background: #e8f5e9; border-left: 4px solid #2e7d32; border-radius: 6px; display: none; }
+        #output { font-size: 14px; line-height: 1.5; white-space: pre-wrap; margin-top: 8px; }
     </style>
 </head>
 <body>
 
 <div class="card">
     <div class="header">
-        <h1>🌾 AgriSahara AI</h1>
-        <p>Binciken Cututtukan Amfanin Gona da Gemini AI</p>
+        <h2>🌾 AgriSahara AI</h2>
+        <p>Taimakon Manoma ta Gemini Vision & Voice</p>
     </div>
+    
+    <label>API Key Dinka:</label>
+    <input type="password" id="apiKey" placeholder="Saka Gemini API Key a nan...">
 
-    <label for="apiInput">Saka Gemini API Key Dinka:</label>
-    <input type="password" id="apiInput" placeholder="Saka API key dinka a nan..." style="width:100%; padding:8px; margin-bottom:12px; border-radius:6px; border:1px solid #ccc;">
+    <label>Loda Hoton Ganyen Shuka:</label>
+    <input type="file" id="imageInput" accept="image/*">
 
-    <label for="cropInput">Bayyana Matsalar Amfanin Gonar:</label>
-    <textarea id="cropInput" placeholder="Misali: Ganyen shinkafa ta yana maida ruwan dorawa da ɗigo-ɗigo masu duhu..."></textarea>
+    <button id="btn" onclick="analyzeImage()">Binciki Hoton Yanzu</button>
 
-    <button id="btn" onclick="analyzeCrop()">Bincika Matsalar Yanzu</button>
-
-    <div id="outputBox">
-        <h3>Sakamakon Bincike da Shawarwari:</h3>
-        <div id="outputContent"></div>
+    <div id="result">
+        <h4 style="color:#1b5e20;">Sakamakon Bincike:</h4>
+        <div id="output">Ana gudanar da bincike...</div>
     </div>
 </div>
 
 <script>
-async function analyzeCrop() {
-    const apiKey = document.getElementById('apiInput').value.trim();
-    const cropText = document.getElementById('cropInput').value.trim();
-    const btn = document.getElementById('btn');
-    const outputBox = document.getElementById('outputBox');
-    const outputContent = document.getElementById('outputContent');
+function speakText(text) {
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel(); // Kashe muryar baya idan tana magana
+        const speech = new SpeechSynthesisUtterance(text);
+        speech.lang = 'ha-NG'; // Muryar Hausa
+        speech.rate = 0.9;
+        window.speechSynthesis.speak(speech);
+    }
+}
 
-    if (!apiKey) {
-        alert("Fatana ka shigar da Gemini API Key dinka tukunna!");
-        return;
-    }
-    if (!cropText) {
-        alert("Don Allah bayyana alamar matsalar amfanin gonarka!");
-        return;
-    }
+async function analyzeImage() {
+    const apiKey = document.getElementById('apiKey').value.trim();
+    const fileInput = document.getElementById('imageInput');
+    const output = document.getElementById('output');
+    const resultDiv = document.getElementById('result');
+    const btn = document.getElementById('btn');
+
+    if (!apiKey) { alert("Don Allah saka Gemini API Key!"); return; }
+    if (fileInput.files.length === 0) { alert("Don Allah zaɓi hoton ganyen amfanin gona!"); return; }
+
+    const file = fileInput.files[0];
+    const reader = new FileReader();
 
     btn.disabled = true;
     btn.innerText = "Gemini AI Yana Bincike...";
-    outputBox.style.display = "block";
-    outputContent.innerText = "Don Allah jira kaɗan, ana sarrafa bayanin...";
+    resultDiv.style.display = "block";
+    output.innerText = "Don Allah jira kaɗan, ana nazarin hoton ganyen...";
 
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-    const prompt = `Kasance kwararren masanin harkar noma na AgriSahara AI. Yi bayani daki-daki da Harshen Hausa mai saukin fahimta game da wannan matsala ta amfanin gona, sannan ka bada hanyoyin magance ta: ${cropText}`;
+    reader.onloadend = async () => {
+        const base64Image = reader.result.split(',')[1];
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
-    try {
-        const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }]
-            })
-        });
+        const promptData = {
+            contents: [{
+                parts: [
+                    { text: "You are AgriSahara AI. Diagnose this crop leaf image. Explain clearly in simple Hausa language: What disease or issue is affecting it, and what practical steps should the farmer take to treat it?" },
+                    { inline_data: { mime_type: file.type, data: base64Image } }
+                ]
+            }]
+        };
 
-        const data = await response.json();
-        if (data.candidates && data.candidates[0].content.parts[0].text) {
-            outputContent.innerText = data.candidates[0].content.parts[0].text;
-        } else {
-            outputContent.innerText = "An samu akasi wajen samun amsa. Tabbatar API key dinka yana da kyau.";
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(promptData)
+            });
+
+            const data = await response.json();
+            if (data.candidates && data.candidates[0].content.parts[0].text) {
+                const responseText = data.candidates[0].content.parts[0].text;
+                output.innerText = responseText;
+                speakText(responseText); // Karanta amsar da murya
+            } else {
+                output.innerText = "Kuskure: Ba a samu amsar bincike ba. Tabbatar API key dinka yana aiki.";
+            }
+        } catch (err) {
+            output.innerText = "An samu matsalar sadarwa (Network Error). Tabbatar intanet din ka yana aiki.";
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "Binciki Hoton Yanzu";
         }
-    } catch (err) {
-        outputContent.innerText = "Kuskure wajen haɗuwa da gizo (Network Error). Tabbatar kana da intanet.";
-    } finally {
-        btn.disabled = false;
-        btn.innerText = "Bincika Matsalar Yanzu";
-    }
+    };
+
+    reader.readAsDataURL(file);
 }
 </script>
 
