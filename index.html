@@ -137,8 +137,8 @@
     <div class="result" id="pestResult"></div>
   </section>
 
-  <div class="config-note">
-    ⚙️ <strong>Ga mai haɓaka app ɗin:</strong> Sanya GEMINI_API_KEY ɗinka a ƙasan wannan fayil (layin da ke ɗauke da "REPLACE_WITH_YOUR_API_KEY") kafin turawa (deploy) zuwa Firebase Hosting.
+  <div class="config-note" id="keyStatus">
+    🔑 Ana bukatar API key don AI ta yi aiki. <button class="btn btn-outline" style="padding:8px 14px; font-size:13px; margin-top:8px;" onclick="setApiKey()">Sanya/Canza API Key</button>
   </div>
 
   <div class="premium">
@@ -156,10 +156,31 @@
 </footer>
 
 <script>
-  const GEMINI_API_KEY = "REPLACE_WITH_YOUR_API_KEY";
-  const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+  function getApiKey(){
+    return localStorage.getItem('agrisahara_gemini_key') || '';
+  }
+  function setApiKey(){
+    const current = getApiKey();
+    const key = prompt('Manna Gemini API key ɗinka anan (za a ajiye shi a wannan wayar kawai):', current);
+    if(key && key.trim()){
+      localStorage.setItem('agrisahara_gemini_key', key.trim());
+      updateKeyStatus();
+      alert('An ajiye API key! Yanzu za ka iya amfani da AI Advisor da Pest Doctor.');
+    }
+  }
+  function updateKeyStatus(){
+    const el = document.getElementById('keyStatus');
+    if(getApiKey()){
+      el.innerHTML = '✅ API key an sanya shi. <button class="btn btn-outline" style="padding:8px 14px; font-size:13px; margin-top:8px;" onclick="setApiKey()">Canza Key</button>';
+    }
+  }
+  function geminiUrl(){
+    return `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${getApiKey()}`;
+  }
+  window.addEventListener('DOMContentLoaded', updateKeyStatus);
 
   async function askAdvisor(){
+    if(!getApiKey()){ alert('Da fatan za a sanya API key tukuna — danna "Sanya/Canza API Key" a ƙasa.'); return; }
     const q = document.getElementById('advisorInput').value.trim();
     if(!q){ alert('Da fatan za a rubuta tambaya tukuna.'); return; }
     const loading = document.getElementById('advisorLoading');
@@ -167,7 +188,7 @@
     loading.style.display='block'; result.style.display='none';
     try{
       const prompt = `Kai kwararre ne kan noma a Arewacin Najeriya. Amsa da Hausa mai sauki, gajarta kuma amfani, ga wannan tambayar manomi: ${q}`;
-      const res = await fetch(GEMINI_URL, {
+      const res = await fetch(geminiUrl(), {
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ contents:[{ parts:[{ text: prompt }] }] })
@@ -196,13 +217,14 @@
   }
 
   async function askPestDoctor(){
+    if(!getApiKey()){ alert('Da fatan za a sanya API key tukuna — danna "Sanya/Canza API Key" a sama.'); return; }
     if(!imageBase64){ alert('Da fatan za a zaɓi hoto tukuna.'); return; }
     const loading = document.getElementById('pestLoading');
     const result = document.getElementById('pestResult');
     loading.style.display='block'; result.style.display='none';
     try{
       const prompt = "Kai likitan tsire-tsire ne. Duba wannan hoton ganye/shuka, gano ko akwai cuta ko kwaro, sannan bada shawarar magani cikin Hausa mai sauki, a takaice.";
-      const res = await fetch(GEMINI_URL, {
+      const res = await fetch(geminiUrl(), {
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body: JSON.stringify({
